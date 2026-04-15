@@ -1009,7 +1009,8 @@ async function fazerLogin(){
   if(!user||!pass){ toast('⚠️ Preencha usuário e senha'); return; }
   mostrarLoading('Verificando...');
   try {
-    const res=await fetch(getUrl(),{ method:'POST', body:JSON.stringify({ acao:'login', user, pass }) });
+    const params=new URLSearchParams({ acao:'login', user, pass });
+    const res=await fetch(getUrl()+'?'+params.toString());
     const data=await res.json();
     ocultarLoading();
     if(data.erro){ toast('❌ '+data.erro); return; }

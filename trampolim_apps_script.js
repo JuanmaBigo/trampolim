@@ -14,6 +14,7 @@ function doGet(e) {
   try {
     if (acao === 'listar')   return resp(listarParticipantes());
     if (acao === 'exportar') return resp(listarParticipantes());
+    if (acao === 'login')    return resp(verificarLogin(e.parameter.user, e.parameter.pass));
     return resp({ erro: 'Ação não reconhecida' });
   } catch(err) {
     return resp({ erro: err.message });
