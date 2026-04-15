@@ -1167,7 +1167,7 @@ function renderPage(){
   const m=document.getElementById('main-content');
   switch(state.pagina){
     case 'dashboard':    m.innerHTML=pageDashboard(); break;
-    case 'participantes':m.innerHTML=pageParticipantes(); break;
+    case 'participantes':m.innerHTML=pageParticipantes(); carregarDados(); break;
     case 'of-financas':  m.innerHTML=pageOficina('financas'); break;
     case 'of-pingpong':  m.innerHTML=pageOficina('pingpong'); break;
     case 'of-moda':      m.innerHTML=pageOficina('moda'); break;
