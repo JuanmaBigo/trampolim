@@ -706,16 +706,15 @@ tbody tr:last-child td { border-bottom: none; }
       <div class="icon">📅</div>
       <span>Virar o mês</span>
     </div>
-    <div class="nav-item" onclick="exportarCSV()">
-      <div class="icon">📥</div>
-      <span>Exportar CSV</span>
-    </div>
-    <div class="nav-item" onclick="carregarDados()">
-      <div class="icon">🔄</div>
-      <span>Recarregar dados</span>
-    </div>
-
-    <div style="padding:12px;margin-top:auto;border-top:1px solid rgba(255,255,255,0.08)">
+    <div style="margin-top:auto;padding:12px 12px 0;border-top:1px solid rgba(255,255,255,0.08)">
+      <div class="nav-item" onclick="carregarDados()">
+        <div class="icon">🔄</div>
+        <span>Recarregar dados</span>
+      </div>
+      <div class="nav-item editor-only" onclick="exportarCSV()">
+        <div class="icon">📥</div>
+        <span>Exportar CSV</span>
+      </div>
       <div class="nav-item" id="btn-login" onclick="abrirLogin()">
         <div class="icon">🔑</div>
         <span id="login-label">Entrar como editor</span>
