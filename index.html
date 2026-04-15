@@ -697,12 +697,12 @@ tbody tr:last-child td { border-bottom: none; }
       <span>Moda e Estilo</span>
     </div>
 
-    <div class="nav-section-label">Ações</div>
-    <div class="nav-item" onclick="abrirCadastro()">
+    <div class="nav-section-label editor-only">Ações</div>
+    <div class="nav-item editor-only" onclick="abrirCadastro()">
       <div class="icon">➕</div>
       <span>Nova criança</span>
     </div>
-    <div class="nav-item" onclick="abrirVirarMes()">
+    <div class="nav-item editor-only" onclick="abrirVirarMes()">
       <div class="icon">📅</div>
       <span>Virar o mês</span>
     </div>
@@ -713,6 +713,13 @@ tbody tr:last-child td { border-bottom: none; }
     <div class="nav-item" onclick="carregarDados()">
       <div class="icon">🔄</div>
       <span>Recarregar dados</span>
+    </div>
+
+    <div style="padding:12px;margin-top:auto;border-top:1px solid rgba(255,255,255,0.08)">
+      <div class="nav-item" id="btn-login" onclick="abrirLogin()">
+        <div class="icon">🔑</div>
+        <span id="login-label">Entrar como editor</span>
+      </div>
     </div>
   </nav>
 </aside>
@@ -887,6 +894,28 @@ tbody tr:last-child td { border-bottom: none; }
 </div>
 </div>
 
+<!-- MODAL LOGIN -->
+<div class="modal-overlay" id="modal-login">
+<div class="modal" style="max-width:400px">
+  <div class="modal-header">
+    <div class="modal-title">🔑 Entrar como editor</div>
+    <button class="modal-close" onclick="fecharModal('modal-login')">✕</button>
+  </div>
+  <div class="form-group" style="margin-bottom:14px">
+    <label class="form-label">Usuário</label>
+    <input class="form-input" id="login-user" placeholder="Usuário">
+  </div>
+  <div class="form-group" style="margin-bottom:14px">
+    <label class="form-label">Senha</label>
+    <input class="form-input" id="login-pass" type="password" placeholder="Senha" onkeydown="if(event.key==='Enter')fazerLogin()">
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-verde" onclick="fazerLogin()">Entrar</button>
+    <button class="btn btn-ghost" onclick="fecharModal('modal-login')">Cancelar</button>
+  </div>
+</div>
+</div>
+
 <script>
 // ─── CONFIGURAÇÃO GOOGLE SHEETS ──────────────────────────────────────────────
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyHAGVqc8Awmt6u652S8iGN3KK8ObN8aYdzO26nHOVHEXcO682ZKwDfJjOGfr5KBRsQ/exec';
@@ -954,7 +983,66 @@ let state = {
   pontuacaoContexto: 'geral',
   pontuacaoSelecionada: {},
   criancaPontuando: null,
+  role: localStorage.getItem('trampolim_role') || 'viewer',
 };
+
+function isEditor(){ return state.role==='editor'; }
+function editorOnly(){ if(!isEditor()){ toast('🔒 Faça login como editor'); return false; } return true; }
+
+function abrirLogin(){
+  if(isEditor()){
+    state.role='viewer';
+    localStorage.removeItem('trampolim_role');
+    atualizarLoginUI();
+    renderPage();
+    toast('Saiu do modo editor');
+    return;
+  }
+  document.getElementById('login-user').value='';
+  document.getElementById('login-pass').value='';
+  abrirModal('modal-login');
+}
+
+async function fazerLogin(){
+  const user=document.getElementById('login-user').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  if(!user||!pass){ toast('⚠️ Preencha usuário e senha'); return; }
+  mostrarLoading('Verificando...');
+  try {
+    const res=await fetch(getUrl(),{ method:'POST', body:JSON.stringify({ acao:'login', user, pass }) });
+    const data=await res.json();
+    ocultarLoading();
+    if(data.erro){ toast('❌ '+data.erro); return; }
+    if(data.role==='editor'){
+      state.role='editor';
+      localStorage.setItem('trampolim_role','editor');
+      fecharModal('modal-login');
+      atualizarLoginUI();
+      renderPage();
+      toast('✅ Logado como editor!');
+    } else {
+      toast('❌ Credenciais inválidas');
+    }
+  } catch(e){
+    ocultarLoading();
+    toast('❌ Erro: '+e.message);
+  }
+}
+
+function atualizarLoginUI(){
+  const label=document.getElementById('login-label');
+  const btn=document.getElementById('btn-login');
+  if(isEditor()){
+    label.textContent='Sair (editor)';
+    btn.style.background='rgba(77,191,160,0.15)';
+  } else {
+    label.textContent='Entrar como editor';
+    btn.style.background='';
+  }
+  document.querySelectorAll('.editor-only').forEach(el=>{
+    el.style.display=isEditor()?'':'none';
+  });
+}
 
 // ─── GOOGLE SHEETS API ────────────────────────────────────────────────────────
 
@@ -1103,7 +1191,7 @@ function pageDashboard(){
     <div class="page-title">Painel Geral</div>
     <div class="page-subtitle">Visão completa do Projeto Trampolim</div>
   </div>
-  <button class="btn btn-verde" onclick="abrirCadastro()">+ Nova criança</button>
+  ${isEditor()?'<button class="btn btn-verde" onclick="abrirCadastro()">+ Nova criança</button>':''}
 </div>
 
 <div class="metrics-grid">
@@ -1195,7 +1283,7 @@ function pageParticipantes(){
   </div>
   <div style="display:flex;gap:10px;flex-wrap:wrap">
     <div class="search-bar"><span>🔍</span><input id="busca-crianca" placeholder="Buscar por nome..." oninput="filtrarTabela()"></div>
-    <button class="btn btn-verde" onclick="abrirCadastro()">+ Nova criança</button>
+    ${isEditor()?'<button class="btn btn-verde" onclick="abrirCadastro()">+ Nova criança</button>':''}
   </div>
 </div>
 
@@ -1205,7 +1293,7 @@ function pageParticipantes(){
         <div class="empty-icon">👦</div>
         <div class="empty-title">Nenhuma criança cadastrada</div>
         <div class="empty-text">Clique em "Nova criança" para começar</div>
-        <div style="margin-top:16px"><button class="btn btn-verde" onclick="abrirCadastro()">+ Cadastrar primeira criança</button></div>
+        ${isEditor()?'<div style="margin-top:16px"><button class="btn btn-verde" onclick="abrirCadastro()">+ Cadastrar primeira criança</button></div>':''}
       </div>`
     :`<div class="table-wrap">
       <table id="tabela-criancas">
@@ -1237,12 +1325,12 @@ function tabelaRow(c){
     <td style="color:var(--verde-escuro);font-weight:700">+${rend}</td>
     <td style="font-size:13px">${c.oficina||'—'}</td>
     <td>${statusBadge(c.autorizacao,'Entregue','Pendente')}</td>
-    <td onclick="event.stopPropagation()">
+    ${isEditor()?`<td onclick="event.stopPropagation()">
       <div style="display:flex;gap:6px">
         <button class="btn btn-sm btn-verde" onclick="abrirPontuarDireto('${c.id}')">+ Pontos</button>
         <button class="btn btn-sm btn-ghost" onclick="abrirEdicao('${c.id}')">Editar</button>
       </div>
-    </td>
+    </td>`:'<td></td>'}
   </tr>`;
 }
 
@@ -1264,7 +1352,7 @@ function pageOficina(id){
     <div class="page-title">${of.emoji} ${of.nome}</div>
     <div class="page-subtitle">${criancas.length} participante(s) nesta oficina</div>
   </div>
-  <button class="btn btn-verde" onclick="abrirPontuar('${id}')">+ Pontuar participante</button>
+  ${isEditor()?`<button class="btn btn-verde" onclick="abrirPontuar('${id}')">+ Pontuar participante</button>`:''}
 </div>
 
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
@@ -1304,7 +1392,7 @@ function pageOficina(id){
           <div style="font-weight:700">${c.nome}</div>
           <div style="font-size:12px;color:var(--cinza)">${c.pontos} moedas · ${nBadge(c.pontos)}</div>
         </div>
-        <button class="btn btn-sm btn-verde" onclick="abrirPontuarDireto('${c.id}','${id}')">+ Pontos</button>
+        ${isEditor()?`<button class="btn btn-sm btn-verde" onclick="abrirPontuarDireto('${c.id}','${id}')">+ Pontos</button>`:''}
       </div>`;
     }).join('')}`}
 </div>
@@ -1615,10 +1703,10 @@ ${hist.slice(0,10).map(h=>`
 </div>`).join('')}
 `}
 
-<div style="display:flex;gap:10px;margin-top:16px">
+${isEditor()?`<div style="display:flex;gap:10px;margin-top:16px">
   <button class="btn btn-verde" onclick="fecharModal('modal-perfil');abrirPontuarDireto('${c.id}')">+ Pontuar</button>
   <button class="btn btn-ghost" onclick="fecharModal('modal-perfil');abrirEdicao('${c.id}')">Editar cadastro</button>
-</div>`;
+</div>`:''}`;
 
   abrirModal('modal-perfil');
 }
@@ -1688,6 +1776,7 @@ document.querySelectorAll('.modal-overlay').forEach(el=>{
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 
+atualizarLoginUI();
 renderPage();
 carregarDados();
 </script>
